@@ -182,7 +182,7 @@ export default function App() {
               initial={{ opacity: 0, y: 18 }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             >
-              portraits, landscapes, and game worlds in orbital motion
+              人像、风景与游戏世界，在轨道中缓缓展开
             </motion.p>
             <motion.h1
               animate={{ opacity: 1, y: 0 }}
@@ -197,8 +197,8 @@ export default function App() {
               initial={{ opacity: 0, y: 24 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.16 }}
             >
-              A deep-space gallery designed for browsing many compressed AVIF photos first,
-              then diving into a cinematic full-screen view with a shared expansion motion.
+              一个为大量压缩 AVIF 图片浏览而设计的深空画廊。
+              先快速陈列，再通过共享放大转场进入电影感十足的全屏沉浸查看。
             </motion.p>
           </div>
 

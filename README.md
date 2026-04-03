@@ -1,36 +1,36 @@
 # JUST BEAUTY
 
-Static cosmic photo showcase built for GitHub Pages.
+这是一个部署到 GitHub Pages 的静态图片展示站，主打宇宙感、沉浸式转场和精致的图片浏览体验。
 
-## Stack
+## 技术栈
 
 - Vite + React + TypeScript
-- Framer Motion for shared transitions and overlay presence
-- Sharp for local incremental image processing
-- AVIF-only output pipeline for gallery and detail assets
+- Framer Motion，用于共享转场和覆盖层动效
+- Sharp，用于本地增量图片处理
+- AVIF 图片输出管线
 
-## Base path
+## 基础路径
 
-The build uses `SITE_BASE` so you can target either:
+构建时通过 `SITE_BASE` 控制站点基础路径。
 
-- `SITE_BASE=/beauty/` for `https://j1nse.github.io/beauty/`
-- `SITE_BASE=/just_beauty/` if the GitHub Pages site is served directly from a `just_beauty` repository
+- `SITE_BASE=/beauty/` 对应 `https://j1nse.github.io/beauty/`
+- `SITE_BASE=/just_beauty/` 对应 `https://j1nse.github.io/just_beauty/`
 
-For this repository's current GitHub Pages URL, use:
+当前仓库对应的 GitHub Pages 地址是：
 
 ```bash
 SITE_BASE=/just_beauty/ npm run build
 ```
 
-## Local workflow
+## 本地工作流
 
-1. Install dependencies:
+1. 安装依赖：
 
    ```bash
    npm install
    ```
 
-2. Put original photos into category folders under `source-images/`:
+2. 将原图放入 `source-images/` 下的分类目录：
 
    ```text
    source-images/
@@ -39,57 +39,61 @@ SITE_BASE=/just_beauty/ npm run build
      游戏/
    ```
 
-3. Process photos:
+3. 处理图片：
 
    ```bash
    npm run images
    ```
 
-4. Start the dev server:
+4. 启动本地开发环境：
 
    ```bash
    npm run dev
    ```
 
-5. Build for GitHub Pages:
+5. 构建 GitHub Pages 产物：
 
    ```bash
    SITE_BASE=/just_beauty/ npm run build
    ```
 
-6. If you want one command that regenerates images and then builds:
+6. 如果你想一条命令完成“重新处理图片 + 构建”：
 
    ```bash
    SITE_BASE=/just_beauty/ npm run build:gallery
    ```
 
-## Image pipeline
+## 图片处理管线
 
-- Originals stay local in `source-images/`
-- Generated assets are written to `public/generated/images`
-- Manifest is written to `public/generated/manifest.json`
-- Machine registry is stored in `content/photo-registry.json`
-- Editable copy metadata is stored in `content/photo-metadata.json`
-- New files are detected incrementally by path + file signature
-- EXIF metadata is stripped from the generated AVIF files
+- 原始图片保留在本地 `source-images/`
+- 生成后的资源写入 `public/generated/images`
+- 前端读取的清单文件写入 `public/generated/manifest.json`
+- 机器生成的状态写入 `content/photo-registry.json`
+- 可人工编辑的文案元数据写入 `content/photo-metadata.json`
+- 通过“文件路径 + 文件签名”做增量检测
+- 重新编码为 AVIF 时会剥离 EXIF 信息
 
 ## GitHub Pages
 
-The repository includes a Pages deployment workflow at `.github/workflows/deploy.yml`.
-Set the `SITE_BASE` value in that workflow to match your final Pages path.
-The GitHub Actions workflow intentionally does not run `npm run images`, because the original photos are kept out of the repository and only the generated assets are deployed.
+仓库内已经包含 GitHub Pages 部署工作流：`.github/workflows/deploy.yml`。  
+请保证 workflow 里的 `SITE_BASE` 与最终访问路径一致。
 
-GitHub still requires a one-time repository setting:
+GitHub Actions 部署流程刻意 **不会** 执行 `npm run images`，因为原始图片不提交到仓库，线上部署只依赖已经生成好的 AVIF 和 manifest。
 
-1. Open `Settings -> Pages`
-2. Under `Build and deployment`, set `Source` to `GitHub Actions`
+GitHub 仓库还需要一次性设置：
 
-Until that setting is enabled, `actions/configure-pages@v5` can fail with a `Get Pages site failed` or `Not Found` error.
+1. 打开 `Settings -> Pages`
+2. 在 `Build and deployment` 下将 `Source` 设为 `GitHub Actions`
 
-## Editable metadata
+如果这一步没有启用，`actions/configure-pages@v5` 可能会报 `Get Pages site failed` 或 `Not Found`。
 
-After you run `npm run images`, the processor keeps a clean, human-editable file at `content/photo-metadata.json`.
-Edit only this file when you want to change display text.
+## 可编辑元数据
+
+执行 `npm run images` 后，脚本会维护一个适合手工编辑的文件：
+
+`content/photo-metadata.json`
+
+你需要修改图片标题、文案时，只编辑这个文件，不要手改 registry。
 
 ```json
 {
@@ -98,15 +102,15 @@ Edit only this file when you want to change display text.
     "美女": [
       {
         "source": "美女/example.jpg",
-        "title": "Moonlit Portrait",
-        "caption": "Optional one-line copy."
+        "title": "月下肖像",
+        "caption": "可选的一句短文案。"
       }
     ]
   }
 }
 ```
 
-- `title` is the gallery title shown on the card and in the overlay
-- `caption` is optional and can be an empty string
-- The file is grouped by category so new imports are easier to find and edit
-- `content/photo-registry.json` is generated state and should not be edited by hand
+- `title` 是卡片和详情页显示的标题
+- `caption` 是可选文案，可以为空字符串
+- 文件按分类分组，便于持续新增图片后整理
+- `content/photo-registry.json` 是生成状态，不建议手工修改
