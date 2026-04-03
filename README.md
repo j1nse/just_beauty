@@ -54,7 +54,13 @@ SITE_BASE=/just_beauty/ npm run build
 5. Build for GitHub Pages:
 
    ```bash
-   SITE_BASE=/beauty/ npm run build
+   SITE_BASE=/just_beauty/ npm run build
+   ```
+
+6. If you want one command that regenerates images and then builds:
+
+   ```bash
+   SITE_BASE=/just_beauty/ npm run build:gallery
    ```
 
 ## Image pipeline
@@ -71,6 +77,7 @@ SITE_BASE=/just_beauty/ npm run build
 
 The repository includes a Pages deployment workflow at `.github/workflows/deploy.yml`.
 Set the `SITE_BASE` value in that workflow to match your final Pages path.
+The GitHub Actions workflow intentionally does not run `npm run images`, because the original photos are kept out of the repository and only the generated assets are deployed.
 
 GitHub still requires a one-time repository setting:
 
