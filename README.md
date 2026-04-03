@@ -56,7 +56,8 @@ The build uses `SITE_BASE` so you can target either:
 - Originals stay local in `source-images/`
 - Generated assets are written to `public/generated/images`
 - Manifest is written to `public/generated/manifest.json`
-- Registry is stored in `content/photo-registry.json`
+- Machine registry is stored in `content/photo-registry.json`
+- Editable copy metadata is stored in `content/photo-metadata.json`
 - New files are detected incrementally by path + file signature
 - EXIF metadata is stripped from the generated AVIF files
 
@@ -65,6 +66,27 @@ The build uses `SITE_BASE` so you can target either:
 The repository includes a Pages deployment workflow at `.github/workflows/deploy.yml`.
 Set the `SITE_BASE` value in that workflow to match your final Pages path.
 
-## Optional copy
+## Editable metadata
 
-Each image entry in `content/photo-registry.json` contains an optional `caption` field. The processor preserves that field across rebuilds, so you can edit it after import.
+After you run `npm run images`, the processor keeps a clean, human-editable file at `content/photo-metadata.json`.
+Edit only this file when you want to change display text.
+
+```json
+{
+  "version": 1,
+  "categories": {
+    "美女": [
+      {
+        "source": "美女/example.jpg",
+        "title": "Moonlit Portrait",
+        "caption": "Optional one-line copy."
+      }
+    ]
+  }
+}
+```
+
+- `title` is the gallery title shown on the card and in the overlay
+- `caption` is optional and can be an empty string
+- The file is grouped by category so new imports are easier to find and edit
+- `content/photo-registry.json` is generated state and should not be edited by hand

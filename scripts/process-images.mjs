@@ -9,6 +9,7 @@ const SOURCE_DIR = path.join(ROOT, "source-images");
 const OUTPUT_DIR = path.join(ROOT, "public", "generated", "images");
 const MANIFEST_FILE = path.join(ROOT, "public", "generated", "manifest.json");
 const REGISTRY_FILE = path.join(ROOT, "content", "photo-registry.json");
+const METADATA_FILE = path.join(ROOT, "content", "photo-metadata.json");
 
 const CARD_WIDTH = 760;
 const DETAIL_WIDTH = 2280;
@@ -165,6 +166,78 @@ async function processVariant(sourcePath, targetPath, width, quality) {
   };
 }
 
+function normalizeMetadataFile(input) {
+  const categories = {};
+
+  if (!input || typeof input !== "object") {
+    return {
+      version: 1,
+      categories,
+    };
+  }
+
+  const rawCategories =
+    "categories" in input && input.categories && typeof input.categories === "object"
+      ? input.categories
+      : {};
+
+  for (const [category, entries] of Object.entries(rawCategories)) {
+    if (!Array.isArray(entries)) {
+      continue;
+    }
+
+    categories[category] = entries
+      .filter((entry) => entry && typeof entry === "object" && typeof entry.source === "string")
+      .map((entry) => ({
+        source: posixPath(entry.source),
+        title: typeof entry.title === "string" ? entry.title : "",
+        caption: typeof entry.caption === "string" ? entry.caption : "",
+      }));
+  }
+
+  return {
+    version: 1,
+    categories,
+  };
+}
+
+function createMetadataLookup(metadataFile) {
+  const lookup = new Map();
+
+  for (const entries of Object.values(metadataFile.categories)) {
+    for (const entry of entries) {
+      lookup.set(entry.source, entry);
+    }
+  }
+
+  return lookup;
+}
+
+function groupMetadataEntries(entries) {
+  const grouped = {};
+  const ordered = [...entries].sort((left, right) => {
+    if (left.category === right.category) {
+      return left.importedAt.localeCompare(right.importedAt) || left.source.localeCompare(right.source);
+    }
+
+    return left.category.localeCompare(right.category, "zh-Hans-CN");
+  });
+
+  for (const entry of ordered) {
+    if (!grouped[entry.category]) {
+      grouped[entry.category] = [];
+    }
+
+    grouped[entry.category].push({
+      source: entry.source,
+      title: entry.title,
+      caption: entry.caption ?? "",
+    });
+  }
+
+  return grouped;
+}
+
 async function main() {
   await ensureDir(SOURCE_DIR);
   await ensureDir(OUTPUT_DIR);
@@ -173,6 +246,13 @@ async function main() {
     version: 1,
     items: {},
   });
+  const metadataFile = normalizeMetadataFile(
+    await readJson(METADATA_FILE, {
+      version: 1,
+      categories: {},
+    }),
+  );
+  const metadataLookup = createMetadataLookup(metadataFile);
 
   const sourceFiles = await collectImageFiles(SOURCE_DIR);
   const nextRegistry = {
@@ -180,9 +260,11 @@ async function main() {
     items: {},
   };
   const manifestItems = [];
+  const editableEntries = [];
 
   for (const sourceFile of sourceFiles) {
     const existing = registry.items[sourceFile.relativePath];
+    const existingCopy = metadataLookup.get(sourceFile.relativePath);
     const baseName = titleize(sourceFile.originalName);
     const uniqueSuffix = createHash("sha1")
       .update(sourceFile.relativePath)
@@ -213,9 +295,9 @@ async function main() {
     const entry = {
       id,
       slug: existing?.slug ?? `${titleSlug}-${uniqueSuffix}`,
-      title: existing?.title ?? baseName,
+      title: existingCopy?.title || existing?.title || baseName,
       category: sourceFile.category,
-      caption: existing?.caption ?? null,
+      caption: (existingCopy?.caption || existing?.caption || "").trim() || null,
       originalName: sourceFile.originalName,
       importedAt: existing?.importedAt ?? new Date().toISOString(),
       signature: sourceFile.signature,
@@ -228,11 +310,22 @@ async function main() {
 
     nextRegistry.items[sourceFile.relativePath] = entry;
     manifestItems.push(entry);
+    editableEntries.push({
+      source: sourceFile.relativePath,
+      category: sourceFile.category,
+      importedAt: entry.importedAt,
+      title: entry.title,
+      caption: entry.caption ?? "",
+    });
   }
 
   manifestItems.sort((left, right) => right.importedAt.localeCompare(left.importedAt));
 
   await writeJson(REGISTRY_FILE, nextRegistry);
+  await writeJson(METADATA_FILE, {
+    version: 1,
+    categories: groupMetadataEntries(editableEntries),
+  });
   await writeJson(MANIFEST_FILE, {
     generatedAt: new Date().toISOString(),
     count: manifestItems.length,
@@ -263,7 +356,11 @@ async function fileExists(input) {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
