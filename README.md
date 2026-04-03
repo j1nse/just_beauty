@@ -16,6 +16,12 @@ The build uses `SITE_BASE` so you can target either:
 - `SITE_BASE=/beauty/` for `https://j1nse.github.io/beauty/`
 - `SITE_BASE=/just_beauty/` if the GitHub Pages site is served directly from a `just_beauty` repository
 
+For this repository's current GitHub Pages URL, use:
+
+```bash
+SITE_BASE=/just_beauty/ npm run build
+```
+
 ## Local workflow
 
 1. Install dependencies:
@@ -65,6 +71,13 @@ The build uses `SITE_BASE` so you can target either:
 
 The repository includes a Pages deployment workflow at `.github/workflows/deploy.yml`.
 Set the `SITE_BASE` value in that workflow to match your final Pages path.
+
+GitHub still requires a one-time repository setting:
+
+1. Open `Settings -> Pages`
+2. Under `Build and deployment`, set `Source` to `GitHub Actions`
+
+Until that setting is enabled, `actions/configure-pages@v5` can fail with a `Get Pages site failed` or `Not Found` error.
 
 ## Editable metadata
 

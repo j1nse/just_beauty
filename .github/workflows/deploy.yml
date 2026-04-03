@@ -38,7 +38,7 @@ jobs:
 
       - name: Build site
         env:
-          SITE_BASE: /beauty/
+          SITE_BASE: /just_beauty/
         run: npm run build
 
       - name: Upload artifact
